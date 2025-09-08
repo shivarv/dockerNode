@@ -1,0 +1,35 @@
+const dotenv = require('dotenv').config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// connect to MongoDB Atlas
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(err => console.error("❌ DB Error:", err));
+
+// Simple schema
+const User = mongoose.model("User", new mongoose.Schema({ name: String }));
+
+// Routes
+app.get("/api/hello", (req, res) => {
+  res.json({ message: "Hello from Node + MongoDB!" });
+});
+
+app.post("/api/users", async (req, res) => {
+  const user = new User({ name: req.body.name });
+  await user.save();
+  res.json(user);
+});
+
+app.get("/api/users", async (req, res) => {
+  const users = await User.find();
+  res.json(users);
+});
+
+const port = process.env.PORT || 5000;
+app.listen(port, () => console.log(`✅ Backend running on port ${port}`));
