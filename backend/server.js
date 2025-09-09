@@ -28,8 +28,17 @@ app.post("/api/users", async (req, res) => {
 });
 
 app.get("/api/users", async (req, res) => {
-  const users = await User.find();
-  res.json(users);
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (err) {
+    console.error("❌ Error fetching users:", err);
+    res.status(500).json({ 
+      error: "Internal server error",
+      message: err.message + ' stack '+err.stack,
+      stack: err.stack  // optional, useful for debugging
+    });
+  }
 });
 
 // --------------------------
