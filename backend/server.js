@@ -8,23 +8,51 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// connect to MongoDB Atlas
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch(err => console.error("❌ DB Error:", err));
+// --------------------------
+// MongoDB Connection
+// --------------------------
+const MONGO_URI = process.env.MONGO_URI;
+const port = process.env.PORT || 5000;
 
-// Simple schema
-const User = mongoose.model("User", new mongoose.Schema({ name: String }));
+mongoose.connect(MONGO_URI, { 
+  useNewUrlParser: true, 
+  useUnifiedTopology: true 
+})
+.then(() => {
+  console.log("✅ MongoDB Connected");
 
+  // Start server only after successful DB connection
+  app.listen(port, () => console.log(`✅ Backend running on port ${port}`));
+})
+.catch(err => {
+  console.error("❌ DB Connection Error:", err);
+  process.exit(1); // Exit process if DB connection fails
+});
+
+// --------------------------
+// Mongoose Model
+// --------------------------
+const User = mongoose.models.User || mongoose.model(
+  "User", 
+  new mongoose.Schema({ name: { type: String, required: true } })
+);
+
+// --------------------------
 // API Routes
+// --------------------------
 app.get("/api/hello", (req, res) => {
   res.json({ message: "Hello from Node + MongoDB!" });
 });
 
 app.post("/api/users", async (req, res) => {
-  const user = new User({ name: req.body.name });
-  await user.save();
-  res.json(user);
+  try {
+    const user = new User({ name: req.body.name });
+    await user.save();
+    res.json(user);
+  } catch (err) {
+    console.error("❌ Error creating user:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get("/api/users", async (req, res) => {
@@ -35,22 +63,21 @@ app.get("/api/users", async (req, res) => {
     console.error("❌ Error fetching users:", err);
     res.status(500).json({ 
       error: "Internal server error",
-      message: err.message + ' stack '+err.stack,
-      stack: err.stack  // optional, useful for debugging
+      message: err.message,
+      stack: err.stack
     });
   }
 });
 
 // --------------------------
-// Serve React frontend
+// Serve React frontend (production)
 // --------------------------
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "frontend/build")));
+  const frontendBuildPath = path.join(__dirname, "frontend/build");
+
+  app.use(express.static(frontendBuildPath));
 
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "frontend/build", "index.html"));
+    res.sendFile(path.join(frontendBuildPath, "index.html"));
   });
 }
-
-const port = process.env.PORT || 5000;
-app.listen(port, () => console.log(`✅ Backend running on port ${port}`));
