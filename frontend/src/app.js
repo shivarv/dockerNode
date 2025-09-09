@@ -5,11 +5,11 @@ function App() {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/hello")
+    fetch('/api/hello')
       .then(res => res.json())
       .then(data => setMessage(data.message));
 
-    fetch("http://localhost:5000/api/users")
+    fetch('/api/users')
       .then(res => res.json())
       .then(data => setUsers(data));
   }, []);
