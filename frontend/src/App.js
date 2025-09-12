@@ -21,6 +21,7 @@ function App() {
       <ul>
         {users.map(u => <li key={u._id}>{u.name}</li>)}
       </ul>
+      <DoctorList />
     </div>
   );
 }
